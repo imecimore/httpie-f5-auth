@@ -6,18 +6,18 @@ F5 BIG-IQ auth plugin for HTTPie.
 import requests
 import urlparse
 import jwt
-import datetime
+from datetime import datetime
 from httpie.plugins import AuthPlugin
 
 __version__ = '0.0.1'
-__author__ = 'mecimore'
+__author__ = 'ivan mecimore'
 __license__ = 'MIT'
 
 
 def make_url(r, path):
-    url = urlparse.urlparser(r.url)
-    host = urlparse.urlunparse(url[0:2])
-    return urlparse.urljoin(host, path)
+    url = urlparse.urlsplit(r.url)
+    url = url._replace(path=path)
+    return urlparse.urlunsplit(url)
 
 
 class XF5AuthToken(object):
@@ -27,7 +27,10 @@ class XF5AuthToken(object):
 
     def is_expired(self):
         decoded = jwt.decode(self.token, verify=False)
-        return decoded['exp'] <= datetime.utcnow()
+        return datetime.utcfromtimestamp(decoded.get('exp', 0)) <= datetime.utcnow()
+
+    def get_token(self):
+        return self.token
 
 
 class F5Auth(object):
@@ -40,31 +43,32 @@ class F5Auth(object):
         self.username = username
         self.password = password
         self.access_token = None
-        self.exchange_token = None
+        self.refresh_token = None
 
     def __call__(self, r):
-        if not self.access_token and not self.exchange_token:
+        if not self.access_token and not self.refresh_token:
             self.get_new_tokens(r)
 
+        # since we aren't caching tokens now this should never happen
         if self.access_token.is_expired():
-            self.exchange_tokens(r)
+            self.refresh_token(r)
 
-        r.headers['X-F5-Auth-Token'] = self.access_token
+        r.headers['X-F5-Auth-Token'] = self.access_token.get_token()
         return r
 
     def get_new_tokens(self, r):
         url = make_url(r, self._login_path)
-        resp = requests.post(url, data={'username': self.username, 'password': self.password}, verify=False)
+        resp = requests.post(url, json={'username': self.username, 'password': self.password}, verify=False)
         resp_json = resp.json()
-        self.access_token = XF5AuthToken(resp_json['token'])
-        self.exchange_token = XF5AuthToken(resp.json['exchangeToken'])
+        self.access_token = XF5AuthToken(resp_json['token']['token'])
+        self.refresh_token = XF5AuthToken(resp_json['refreshToken']['token'])
 
     def exchange_token(self, r):
-        if self.exchange_token.is_expired():
+        if self.refresh_token.is_expired():
             raise Exception('Exchange token is expired.')
 
         url = make_url(r, self._exchange_path)
-        resp = requests.post(url, data={'exchangeToken': self.exchange_token}, verify=False)
+        resp = requests.post(url, data={'refreshToken': self.refresh_token}, verify=False)
         self.access_token = resp.json()['token']
 
 
@@ -73,7 +77,7 @@ class F5AuthPlugin(AuthPlugin):
 
     name = 'X-F5-Auth-Token auth'
     auth_type = 'xf5'
-    description = 'Send requests using an X-F5-Auth-Token'
+    description = 'Authenticate using an X-F5-Auth-Token'
 
     def get_auth(self, username, password):
         return F5Auth(username, password)
