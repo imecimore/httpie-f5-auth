@@ -4,7 +4,7 @@ setup(
     name='httpie-f5-auth',
     description='F5 BIG-IQ Auth plugin for HTTPie.',
     long_description=open('README.rst').read().strip(),
-    version='0.0.1',
+    version='0.0.2',
     author='Ivan Mecimore',
     author_email='imecimore@gmail.com',
     license='MIT',

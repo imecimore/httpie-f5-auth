@@ -1,7 +1,7 @@
 httpie-f5-auth
 ===============
 
-`F5Auth <https://github.com/link>`_ auth plugin for `HTTPie <https://github.com/jkbr/httpie>`_.
+`F5Auth <https://github.com/imecimore/httpie-f5-auth>`_ auth plugin for `HTTPie <https://github.com/jkbr/httpie>`_.
 
 Installation
 ------------

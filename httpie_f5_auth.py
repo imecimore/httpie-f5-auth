@@ -9,7 +9,7 @@ import jwt
 from datetime import datetime
 from httpie.plugins import AuthPlugin
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 __author__ = 'ivan mecimore'
 __license__ = 'MIT'
 
