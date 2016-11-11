@@ -5,11 +5,11 @@ F5 BIG-IQ auth plugin for HTTPie.
 """
 import requests
 import urlparse
-import jwt
+from jose import jwt
 from datetime import datetime
 from httpie.plugins import AuthPlugin
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 __author__ = 'ivan mecimore'
 __license__ = 'MIT'
 
@@ -26,7 +26,19 @@ class XF5AuthToken(object):
         self.token = token
 
     def is_expired(self):
-        decoded = jwt.decode(self.token, verify=False)
+        opts = {
+            'verify_signature': False,
+            'verify_aud': False,
+            'verify_iat': False,
+            'verify_exp': True,
+            'verify_nbf': False,
+            'verify_iss': False,
+            'verify_sub': False,
+            'verify_jti': False,
+            'leeway': 0
+        }
+
+        decoded = jwt.decode(self.token, None, options=opts)
         return datetime.utcfromtimestamp(decoded.get('exp', 0)) <= datetime.utcnow()
 
     def get_token(self):
