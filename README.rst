@@ -15,6 +15,14 @@ You should now see ``f5-auth`` under ``--auth-type`` in ``$ http --help`` output
 Usage
 -----
 
+For local users you can do:
+
 .. code-block:: bash
 
-    $ http --auth USER[:PASS] --verify=no --default-scheme=https mybigiq.com/mgmt/shared/echo
+    $ http --auth-type=xf5 --auth USER:PASS --default-scheme=https mybigiq.com/mgmt/shared/echo
+
+To specify a remote auth provider:
+
+.. code-block:: bash
+
+    $ http --auth-type=xf5 --auth PROVIDER_NAME//USER:PASS --default-scheme=https mybigiq.com/mgmt/shared/echo
